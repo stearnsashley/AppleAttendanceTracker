@@ -1,0 +1,2931 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Attendance Check-In</title>
+
+<style>
+  :root {
+    --cream: #fffdf6;
+    --paper: #ffffff;
+    --pink: #ffbfd8;
+    --pink-dark: #ef7ab0;
+    --yellow: #ffe88f;
+    --yellow-dark: #f7c74d;
+    --red: #ff9a9a;
+    --green: #98e4a5;
+    --green-dark: #55b96d;
+    --blue: #8ecbff;
+    --blue-dark: #4ca5ff;
+    --purple: #d9c3ff;
+    --purple-dark: #9d7ae8;
+    --peach: #ffd9b3;
+    --dark: #2f3d66;
+    --muted: #6673a1;
+    --border: #dfe9ff;
+    --shadow: 0 12px 30px rgba(109, 141, 255, .14);
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: "KG Red Hands", "Comic Sans MS", "Segoe Print", cursive;
+    color: var(--dark);
+    background:
+      radial-gradient(circle at 10% 15%, rgba(255, 191, 216, .35) 0 40px, transparent 41px),
+      radial-gradient(circle at 90% 10%, rgba(142, 203, 255, .30) 0 55px, transparent 56px),
+      radial-gradient(circle at 50% 90%, rgba(152, 228, 165, .28) 0 60px, transparent 61px),
+      linear-gradient(135deg, #fffaf8 0%, #eef9ff 35%, #fff6d8 100%);
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+  }
+
+  button {
+    cursor: pointer;
+  }
+
+  .hidden {
+    display: none !important;
+  }
+
+  /* -------------------------
+     SETUP
+  ------------------------- */
+
+  #setupView {
+    position: relative;
+    min-height: 100vh;
+    padding: 35px 20px 60px;
+    background: linear-gradient(180deg, #fff8fb 0, #fff 250px);
+  }
+
+  #setupView::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 6px;
+    background: linear-gradient(90deg, #f4b5cc, #ffd2a8, #f4e69b, #b9e2c5, #a9d4e8, #c5b9e5);
+  }
+
+  .setup-wrap {
+    position: relative;
+    width: min(800px, 100%);
+    margin: auto;
+  }
+
+  .hero {
+    text-align: center;
+    margin-bottom: 22px;
+  }
+
+  .hero-art {
+    font-size: 64px;
+    letter-spacing: 8px;
+    margin-bottom: 8px;
+  }
+
+  .hero h1 {
+    margin: 0;
+    font-family: "KG Red Hands", "Comic Sans MS", "Segoe Print", cursive;
+    font-size: clamp(30px, 4vw, 42px);
+    color: #45495a;
+  }
+
+  .hero p {
+    margin: 8px 0 0;
+    color: var(--muted);
+    font-size: 17px;
+  }
+
+  .panel {
+    background: #fff;
+    border: 1px solid #e8e8ed;
+    border-top: 4px solid #f4b5cc;
+    border-radius: 8px;
+    padding: 22px;
+    margin-bottom: 14px;
+    box-shadow: none;
+  }
+
+  #setupView .panel:nth-child(3) { border-top-color: #ffd2a8; }
+  #setupView .panel:nth-child(4) { border-top-color: #f4e69b; }
+  #setupView .panel:nth-child(5) { border-top-color: #b9e2c5; }
+  #setupView .panel:nth-child(6) { border-top-color: #a9d4e8; }
+  #setupView .panel:nth-child(7) { border-top-color: #c5b9e5; }
+  #setupView .panel:nth-child(8) { border-top-color: #f4b5cc; }
+  #setupView .panel:nth-child(9) { border-top-color: #ffd2a8; }
+
+  #setupView .panel h2 {
+    color: #45495a;
+    font-size: 21px;
+  }
+
+  .panel h2 {
+    margin: 0 0 8px;
+    font-family: "KG Red Hands", "Comic Sans MS", "Segoe Print", cursive;
+  }
+
+  .help {
+    color: #707785;
+    margin-top: 0;
+    line-height: 1.5;
+  }
+
+  label.field-label {
+    display: block;
+    font-weight: 800;
+    margin: 20px 0 8px;
+  }
+
+  textarea,
+  input[type="text"],
+  select {
+    width: 100%;
+    border: 2px solid var(--border);
+    border-radius: 14px;
+    padding: 12px 14px;
+    background: white;
+    color: var(--dark);
+    outline: none;
+  }
+
+  #setupView textarea,
+  #setupView input[type="text"],
+  #setupView select {
+    border-width: 1px;
+    border-radius: 8px;
+  }
+
+  #setupView .character-choice,
+  #setupView .radio-option {
+    border-radius: 8px;
+  }
+
+  textarea:focus,
+  input[type="text"]:focus,
+  select:focus {
+    border-color: var(--gold);
+  }
+
+  textarea {
+    min-height: 170px;
+    resize: vertical;
+  }
+
+  .character-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(125px, 1fr));
+    gap: 12px;
+    margin-top: 14px;
+  }
+
+  .character-choice {
+    border: 2px solid var(--border);
+    background: white;
+    border-radius: 18px;
+    padding: 14px 8px;
+    text-align: center;
+    transition: .15s;
+  }
+
+  .character-choice:hover {
+    transform: translateY(-2px);
+    border-color: var(--gold);
+  }
+
+  .character-choice.selected {
+    border-color: var(--orange);
+    background: #fff3df;
+    box-shadow: 0 5px 15px rgba(232,117,40,.15);
+  }
+
+  .character-choice .emoji {
+    display: block;
+    font-size: 42px;
+    line-height: 1;
+    margin-bottom: 5px;
+  }
+
+  .character-choice .clipart {
+    display: block;
+    width: 72px;
+    height: 72px;
+    object-fit: contain;
+    margin: 0 auto 8px;
+    border-radius: 12px;
+    background: #fff;
+    padding: 4px;
+  }
+
+  .auto-preview {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-height: 34px;
+    margin-bottom: 6px;
+  }
+
+  .auto-preview .clipart {
+    width: 24px;
+    height: 24px;
+    margin: 0;
+    padding: 2px;
+    border-radius: 8px;
+  }
+
+  .character-choice span:last-child {
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .character-remove {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 22px;
+    height: 22px;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    background: rgba(255,255,255,.9);
+    color: var(--dark);
+    font-size: 16px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    box-shadow: 0 4px 10px rgba(47,61,102,.08);
+  }
+
+  .character-choice {
+    position: relative;
+  }
+
+  .character-upload {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 112px;
+    border: 2px dashed var(--gold);
+    border-radius: 18px;
+    padding: 14px 8px;
+    background: #fffaf0;
+    color: var(--brown);
+    font-weight: 800;
+    text-align: center;
+    cursor: pointer;
+  }
+
+  .character-upload:hover {
+    background: #fff3df;
+  }
+
+  .character-upload input {
+    display: none;
+  }
+
+  .radio-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .radio-option {
+    flex: 1 1 200px;
+    border: 2px solid var(--border);
+    border-radius: 14px;
+    padding: 14px;
+    background: white;
+  }
+
+  .radio-option:has(input:checked) {
+    border-color: var(--orange);
+    background: #fff4e5;
+  }
+
+  .radio-option input {
+    margin-right: 8px;
+  }
+
+  .lunch-options {
+    display: grid;
+    gap: 8px;
+  }
+
+  .lunch-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  .lunch-row input {
+    flex: 1;
+  }
+
+  .lunch-row {
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .lunch-image-input {
+    flex: 0 0 auto;
+    max-width: 190px;
+  }
+
+  .lunch-image-preview {
+    width: 44px;
+    height: 44px;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+  }
+
+  .background-image-preview {
+    display: block;
+    width: min(100%, 360px);
+    max-height: 200px;
+    margin-top: 12px;
+    object-fit: cover;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+
+  .background-color-controls {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 14px;
+  }
+
+  #backgroundColorPicker {
+    width: 48px;
+    height: 42px;
+    padding: 3px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: white;
+    cursor: pointer;
+  }
+
+  #backgroundColorHex {
+    width: 132px;
+  }
+
+  .small-button {
+    border: 1px solid var(--border);
+    background: #fff;
+    border-radius: 10px;
+    padding: 8px 12px;
+  }
+
+  .small-button:hover {
+    background: #fff3df;
+  }
+
+  .primary {
+    width: 100%;
+    border: 0;
+    border-radius: 16px;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, var(--pink-dark), var(--yellow-dark), var(--green), var(--blue-dark));
+    color: white;
+    font-weight: 900;
+    font-size: 18px;
+    box-shadow: 0 7px 18px rgba(124, 152, 255, .25);
+  }
+
+  .primary:hover {
+    filter: brightness(1.05);
+    transform: translateY(-1px);
+  }
+
+  .backup-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .secondary {
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 15px;
+    background: white;
+    color: var(--dark);
+    font-weight: 700;
+  }
+
+  .secondary:hover {
+    border-color: var(--gold);
+    background: #fff9ef;
+  }
+
+  /* -------------------------
+     TRACKER
+  ------------------------- */
+
+  #trackerView {
+    min-height: 100vh;
+    position: relative;
+    overflow: hidden;
+  }
+
+  #trackerView,
+  #trackerView * {
+    color: #000;
+  }
+
+  .tracker-header {
+    position: relative;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    padding: 16px 22px;
+    background: rgba(255,253,247,.86);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .tracker-title {
+    font-family: "KG Red Hands", "Comic Sans MS", "Segoe Print", cursive;
+    color: var(--brown);
+    font-size: 25px;
+    font-weight: 900;
+  }
+
+  .progress {
+    color: var(--muted);
+    font-weight: 800;
+    font-size: 14px;
+  }
+
+  .lunch-counter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+  }
+
+  .lunch-counter-item {
+    max-width: 100%;
+    padding: 3px 8px;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    background: rgba(255, 255, 255, .82);
+    font-size: 12px;
+    font-weight: 800;
+    overflow-wrap: anywhere;
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 7px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .icon-btn {
+    border: 1px solid var(--border);
+    background: white;
+    border-radius: 11px;
+    padding: 8px 11px;
+    font-weight: 700;
+  }
+
+  .icon-btn:hover {
+    background: #fff4e3;
+  }
+
+  .scene {
+    position: absolute;
+    inset: 66px 0 0;
+    overflow: hidden;
+    background: linear-gradient(to bottom, #73def4 0 58%, #8fd04f 58% 100%);
+  }
+
+  .scene.has-background {
+    background-position: center bottom;
+    background-repeat: no-repeat;
+    background-size: cover;
+  }
+
+  .scene.has-background .sun,
+  .scene.has-background .cloud,
+  .scene.has-background .ground {
+    display: none;
+  }
+
+  .sun {
+    position: absolute;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background: #ffca05;
+    left: -90px;
+    top: -115px;
+  }
+
+  .cloud {
+    position: absolute;
+    width: 150px;
+    height: 46px;
+    border-radius: 50px;
+    background: #fff;
+    opacity: .98;
+  }
+
+  .cloud::before,
+  .cloud::after {
+    content: "";
+    position: absolute;
+    bottom: 14px;
+    border-radius: 50%;
+    background: #fff;
+  }
+
+  .cloud::before {
+    left: 20px;
+    width: 58px;
+    height: 58px;
+  }
+
+  .cloud::after {
+    left: 62px;
+    width: 76px;
+    height: 76px;
+  }
+
+  .cloud.one {
+    top: 2%;
+    left: 19%;
+  }
+
+  .cloud.two {
+    top: 9%;
+    right: 7%;
+    transform: scale(.8);
+  }
+
+  .ground {
+    display: none;
+  }
+
+  .fall-decoration {
+    position: absolute;
+    font-size: 36px;
+    opacity: .8;
+  }
+
+  .fall-decoration.a { left: 5%; bottom: 21%; }
+  .fall-decoration.b { left: 15%; bottom: 12%; }
+  .fall-decoration.c { right: 7%; bottom: 18%; }
+  .fall-decoration.d { right: 19%; bottom: 10%; }
+
+  .question {
+    position: absolute;
+    z-index: 2;
+    top: 7%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(760px, 90%);
+    text-align: center;
+    font-family: "KG Red Hands", "Comic Sans MS", "Segoe Print", cursive;
+    color: #633f28;
+  }
+
+  .question .eyebrow {
+    font-family: "KG Red Hands", "Comic Sans MS", "Segoe Print", cursive;
+    font-size: 14px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--blue-dark);
+  }
+
+  .question h2 {
+    font-size: clamp(27px, 5vw, 46px);
+    margin: 8px 0;
+  }
+
+  .students {
+    position: absolute;
+    z-index: 3;
+    left: 0;
+    right: 0;
+    bottom: 40px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-end;
+    gap: 16px;
+    padding: 20px 28px;
+    max-height: 70%;
+    overflow-y: auto;
+  }
+
+  .students.whole-screen {
+    top: 5%;
+    bottom: 25px;
+    max-height: 90%;
+  }
+
+  .student {
+    width: 150px;
+    min-height: 180px;
+    border: 3px solid transparent;
+    border-radius: 24px;
+    background: transparent;
+    box-shadow: none;
+    padding: 10px;
+    text-align: center;
+    transition: .15s;
+    position: relative;
+  }
+
+  .student:hover {
+    transform: translateY(-5px);
+  }
+
+  .student.here {
+    border-color: transparent;
+    opacity: .25;
+  }
+
+  .student.away {
+    border-color: var(--red);
+    opacity: .78;
+  }
+
+  .student.unmarked {
+    border-color: transparent;
+  }
+
+  .student-character {
+    font-size: 55px;
+    line-height: 1;
+    margin: 3px 0 7px;
+  }
+
+  .student-character img {
+    display: block;
+    width: 120px;
+    height: 120px;
+    margin: 0 auto;
+    object-fit: contain;
+    background: transparent;
+  }
+
+  .student-name {
+    font-weight: 900;
+    overflow-wrap: anywhere;
+  }
+
+  #trackerView .student-name {
+    display: inline-block;
+    max-width: 100%;
+    padding: 4px 9px;
+    border-radius: 9px;
+    background: rgba(255, 255, 255, .78);
+    color: #000;
+  }
+
+  .student-status {
+    margin-top: 6px;
+    font-size: 12px;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+
+  .here .student-status {
+    color: var(--green);
+  }
+
+  .away .student-status {
+    color: var(--red);
+  }
+
+  .unmarked .student-status {
+    color: var(--muted);
+  }
+
+  .check-mark {
+    position: absolute;
+    right: 8px;
+    top: 7px;
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    background: var(--green);
+    color: white;
+    font-size: 15px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .here .check-mark {
+    display: flex;
+  }
+
+  .x-mark {
+    position: absolute;
+    right: 8px;
+    top: 7px;
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    background: var(--red);
+    color: white;
+    font-size: 15px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .away .x-mark {
+    display: flex;
+  }
+
+  /* -------------------------
+     MODALS
+  ------------------------- */
+
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    background: rgba(35,23,16,.45);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  #lunchModal {
+    align-items: center;
+    padding: 20px;
+  }
+
+  #lunchModal .modal {
+    width: min(460px, 100%);
+    max-height: 60vh;
+    padding: 16px;
+    border-radius: 18px;
+  }
+
+  .modal {
+    width: min(700px, 100%);
+    max-height: 90vh;
+    overflow-y: auto;
+    background: var(--paper);
+    border-radius: 24px;
+    padding: 25px;
+    box-shadow: 0 30px 70px rgba(0,0,0,.25);
+  }
+
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .modal-header h2 {
+    margin: 0;
+    font-family: "KG Red Hands", "Comic Sans MS", "Segoe Print", cursive;
+    color: var(--brown);
+  }
+
+  .close {
+    border: 0;
+    background: #f4e8d8;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    font-size: 20px;
+  }
+
+  .report-section {
+    margin-top: 20px;
+  }
+
+  .report-section h3 {
+    margin-bottom: 8px;
+  }
+
+  .report-list {
+    background: #fff8ed;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 16px;
+    min-height: 40px;
+  }
+
+  .report-lunch {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 8px;
+  }
+
+  .student-lunch-list {
+    display: grid;
+    gap: 8px;
+  }
+
+  .student-lunch-item {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 12px;
+  }
+
+  .lunch-count {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px;
+  }
+
+  .lunch-count strong {
+    display: block;
+    font-size: 22px;
+    color: var(--orange-dark);
+  }
+
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+  }
+
+  .modal-actions button {
+    flex: 1 1 180px;
+  }
+
+  /* Lunch popup */
+
+  .lunch-student {
+    font-size: 18px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  .lunch-choice-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .lunch-choice {
+    min-height: 86px;
+    padding: 9px;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    background: white;
+    font-weight: 800;
+    text-align: center;
+  }
+
+  .lunch-choice-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 5px;
+    overflow-wrap: anywhere;
+  }
+
+  .lunch-choice img {
+    width: 42px;
+    height: 42px;
+    object-fit: contain;
+    border-radius: 12px;
+    flex: 0 0 auto;
+    background: #fffaf3;
+    padding: 4px;
+  }
+
+  .lunch-count-image {
+    width: 52px;
+    height: 52px;
+    object-fit: contain;
+    border-radius: 10px;
+    float: right;
+    background: #fffaf3;
+    padding: 4px;
+  }
+
+  .lunch-choice:hover {
+    border-color: var(--orange);
+    background: #fff5e7;
+  }
+
+  /* -------------------------
+     RESPONSIVE
+  ------------------------- */
+
+  @media (max-width: 700px) {
+    .panel {
+      padding: 20px;
+      border-radius: 18px;
+    }
+
+    .character-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .tracker-header {
+      align-items: flex-start;
+    }
+
+    .tracker-title {
+      font-size: 19px;
+    }
+
+    .progress {
+      font-size: 12px;
+    }
+
+    .header-actions {
+      max-width: 190px;
+    }
+
+    .icon-btn {
+      font-size: 12px;
+      padding: 7px 8px;
+    }
+
+    .students {
+      gap: 10px;
+      padding: 10px;
+    }
+
+    .student {
+      min-height: 120px;
+      border-radius: 18px;
+    }
+
+    .student-character {
+      font-size: 43px;
+    }
+  }
+
+  @media (max-width: 450px) {
+    .student {
+      min-height: 108px;
+      padding: 7px;
+    }
+
+    .student-character {
+      font-size: 36px;
+    }
+
+    .student-name {
+      font-size: 13px;
+    }
+
+    .students {
+      bottom: 20px;
+    }
+  }
+</style>
+</head>
+
+<body>
+
+<!-- =========================
+     SETUP VIEW
+========================== -->
+
+<section id="setupView">
+
+  <div class="setup-wrap">
+
+    <div class="hero">
+      <h1>Attendance Check-In</h1>
+      <p>A simple, cheerful classroom attendance tracker.</p>
+    </div>
+
+    <div class="panel">
+
+      <h2>Class list</h2>
+      <p class="help">
+        Enter one student name per line. You can change the roster anytime
+        from Settings.
+      </p>
+
+      <label class="field-label" for="studentNames">
+        Student names
+      </label>
+
+      <textarea
+        id="studentNames"
+        placeholder="Emma&#10;Liam&#10;Olivia&#10;Noah&#10;Ava"
+      ></textarea>
+
+    </div>
+
+    <div class="panel">
+
+      <h2>Character assignment</h2>
+
+      <p class="help">
+        Choose a character to use for everyone, or let the tracker rotate
+        characters automatically.
+      </p>
+
+      <div class="character-grid" id="characterGrid">
+      </div>
+
+    </div>
+
+    <div class="panel">
+
+      <h2>Check-in area</h2>
+
+      <div class="radio-row">
+
+        <label class="radio-option">
+          <input
+            type="radio"
+            name="position"
+            value="whole"
+            checked
+          >
+          <strong>Whole screen</strong>
+          <br>
+          <small>Students appear throughout the scene.</small>
+        </label>
+
+        <label class="radio-option">
+          <input
+            type="radio"
+            name="position"
+            value="bottom"
+          >
+          <strong>Bottom half of screen</strong>
+          <br>
+          <small>Keeps the top clear for your message.</small>
+        </label>
+
+      </div>
+
+    </div>
+
+    <div class="panel">
+
+      <h2>Background</h2>
+      <p class="help">Upload a picture or choose a solid color for the check-in scene.</p>
+      <input type="file" id="backgroundImageInput" accept="image/*">
+      <img id="backgroundImagePreview" class="background-image-preview hidden" alt="Background image preview">
+      <div class="background-color-controls">
+        <label for="backgroundColorPicker">Color</label>
+        <input type="color" id="backgroundColorPicker" value="#ffffff" aria-label="Choose background color">
+        <label for="backgroundColorHex">Hex code</label>
+        <input type="text" id="backgroundColorHex" placeholder="#AABBCC" maxlength="7" autocomplete="off" spellcheck="false">
+      </div>
+      <button class="small-button hidden" id="removeBackgroundButton" type="button">Use default background</button>
+
+    </div>
+
+    <div class="panel">
+
+      <h2>Lunch count</h2>
+
+      <label class="radio-option" style="display:block;">
+        <input type="checkbox" id="lunchEnabled">
+        <strong>Include lunch choices</strong>
+        <br>
+        <small>Students will be asked to select their lunch after checking in.</small>
+      </label>
+
+      <label class="field-label">
+        Lunch options
+      </label>
+
+      <div id="lunchOptions" class="lunch-options"></div>
+
+      <button class="small-button" id="addLunch">
+        + Add another option
+      </button>
+
+    </div>
+
+    <div class="panel">
+
+      <h2>Start your tracker</h2>
+
+      <button class="primary" id="startButton">
+        � Let's Get Started
+      </button>
+
+    </div>
+
+    <div class="panel">
+
+      <h2>Backup & restore</h2>
+
+      <p class="help">
+        Your class list and settings are saved in this browser.
+        Download a backup if you want to move the tracker to another
+        computer or browser.
+      </p>
+
+      <div class="backup-row">
+
+        <button class="secondary" id="downloadBackup">
+          Download backup
+        </button>
+
+        <button class="secondary" id="restoreButton">
+          Restore from backup
+        </button>
+
+        <input
+          type="file"
+          id="restoreInput"
+          accept=".json"
+          class="hidden"
+        >
+
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- =========================
+     TRACKER VIEW
+========================== -->
+
+<section id="trackerView" class="hidden">
+
+  <header class="tracker-header">
+
+    <div>
+      <div class="tracker-title" id="trackerTitle">
+        Attendance Check-In
+      </div>
+
+      <div class="progress" id="progress">
+        0 of 0 here
+      </div>
+
+      <div class="lunch-counter hidden" id="lunchCounter" aria-live="polite"></div>
+    </div>
+
+    <div class="header-actions">
+
+      <button class="icon-btn" id="undoButton">
+        Undo
+      </button>
+
+      <button class="icon-btn" id="reportButton">
+        Report
+      </button>
+
+      <button class="icon-btn" id="settingsButton">
+        Settings
+      </button>
+
+    </div>
+
+  </header>
+
+  <main class="scene">
+
+    <div class="sun"></div>
+
+    <div class="cloud one" aria-hidden="true"></div>
+    <div class="cloud two" aria-hidden="true"></div>
+
+    <div class="ground"></div>
+
+    <div class="students" id="students"></div>
+
+  </main>
+
+</section>
+
+
+<!-- =========================
+     LUNCH MODAL
+========================== -->
+
+<div class="modal-backdrop hidden" id="lunchModal">
+
+  <div class="modal">
+
+    <div class="modal-header">
+
+      <div>
+        <h2>What's for lunch?</h2>
+        <div class="lunch-student" id="lunchStudent"></div>
+      </div>
+
+      <button class="close" id="closeLunch">X</button>
+
+    </div>
+
+    <div class="lunch-choice-grid" id="lunchChoices"></div>
+
+  </div>
+
+</div>
+
+
+<!-- =========================
+     REPORT MODAL
+========================== -->
+
+<div class="modal-backdrop hidden" id="reportModal">
+
+  <div class="modal">
+
+    <div class="modal-header">
+
+      <h2>Today's Report</h2>
+
+      <button class="close" id="closeReport">X</button>
+
+    </div>
+
+    <div class="report-section">
+
+      <h3>Here (<span id="hereCount">0</span>)</h3>
+
+      <div class="report-list" id="hereList">
+        None yet
+      </div>
+
+    </div>
+
+    <div class="report-section">
+
+      <h3>Away (<span id="awayCount">0</span>)</h3>
+
+      <div class="report-list" id="awayList">
+        None yet
+      </div>
+
+    </div>
+
+    <div class="report-section" id="lunchReportSection">
+
+      <h3>Lunch count</h3>
+
+      <div class="report-lunch" id="lunchReport"></div>
+
+    </div>
+
+    <div class="report-section" id="studentLunchReportSection">
+
+      <h3>Lunch choices</h3>
+
+      <div class="report-list student-lunch-list" id="studentLunchReport">
+        None yet
+      </div>
+
+    </div>
+
+    <div class="modal-actions">
+
+      <button class="secondary" id="copyReport">
+        Copy to clipboard
+      </button>
+
+      <button class="secondary" id="newDay">
+        Start a new day
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<script>
+/* ==========================================================
+   ATTENDANCE CHECK-IN
+   Single-file classroom attendance application
+========================================================== */
+
+const STORAGE_KEY = "attendanceCheckIn_v1";
+let checkInAudioContext = null;
+
+const CHARACTER_ROTATION = [
+  "A",
+  "B",
+  "C",
+  "D",
+  "E",
+  "F"
+];
+
+const BUILT_IN_CHARACTERS = [
+  { id: "auto", label: "Auto Rotate", emoji: "A" },
+
+];
+
+const DEFAULT_LUNCH = [
+  { name: "School Lunch", image: "" },
+  { name: "Packed Lunch", image: "" }
+];
+
+let state = {
+  students: [],
+  settings: {
+    characterMode: "auto",
+    customCharacters: [],
+    position: "whole",
+    lunchEnabled: true,
+    lunchOptions: [...DEFAULT_LUNCH],
+    backgroundImage: "",
+    backgroundColor: "",
+    question: "Lunch Count"
+  },
+  history: [],
+  lastDate: new Date().toISOString().slice(0, 10)
+};
+
+
+/* ==========================================================
+   DOM
+========================================================== */
+
+const setupView = document.getElementById("setupView");
+const trackerView = document.getElementById("trackerView");
+
+const studentNames = document.getElementById("studentNames");
+const lunchEnabled = document.getElementById("lunchEnabled");
+const lunchOptionsEl = document.getElementById("lunchOptions");
+const backgroundImageInput = document.getElementById("backgroundImageInput");
+const backgroundImagePreview = document.getElementById("backgroundImagePreview");
+const backgroundColorPicker = document.getElementById("backgroundColorPicker");
+const backgroundColorHex = document.getElementById("backgroundColorHex");
+const removeBackgroundButton = document.getElementById("removeBackgroundButton");
+const scene = document.querySelector(".scene");
+
+const trackerTitle = document.getElementById("trackerTitle");
+const questionText = document.getElementById("questionText");
+const progress = document.getElementById("progress");
+const lunchCounter = document.getElementById("lunchCounter");
+const studentsEl = document.getElementById("students");
+
+const lunchModal = document.getElementById("lunchModal");
+const lunchStudent = document.getElementById("lunchStudent");
+const lunchChoices = document.getElementById("lunchChoices");
+
+const reportModal = document.getElementById("reportModal");
+
+
+/* ==========================================================
+   STORAGE
+========================================================== */
+
+function saveState() {
+  state.lastDate = new Date().toISOString().slice(0, 10);
+
+  try {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify(state)
+    );
+  } catch (error) {
+    if (error.name === "QuotaExceededError" && state.history.length) {
+      state.history = [];
+
+      try {
+        localStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify(state)
+        );
+        return;
+      } catch (retryError) {
+        error = retryError;
+      }
+    }
+
+    console.warn("Could not save tracker state.", error);
+  }
+}
+
+function loadState() {
+
+  try {
+
+    const saved = localStorage.getItem(STORAGE_KEY);
+
+    if (!saved) {
+      return;
+    }
+
+    const parsed = JSON.parse(saved);
+
+    if (
+      parsed &&
+      Array.isArray(parsed.students) &&
+      parsed.settings
+    ) {
+      state = parsed;
+      state.settings.backgroundImage = state.settings.backgroundImage || "";
+
+      state.settings.lunchOptions =
+        (state.settings.lunchOptions || []).map(option =>
+          typeof option === "string"
+            ? { name: option, image: "" }
+            : { name: option.name || "", image: option.image || "" }
+        );
+
+      state.settings.customCharacters =
+        (state.settings.customCharacters || []).filter(
+          character => character.id && character.image
+        );
+
+      state.history = (state.history || []).map(snapshot => {
+        try {
+          const students = JSON.parse(snapshot);
+
+          return Array.isArray(students)
+            ? JSON.stringify(students.map(student => ({
+                id: student.id,
+                status: student.status,
+                lunch: student.lunch
+              })))
+            : null;
+        } catch (error) {
+          return null;
+        }
+      }).filter(Boolean).slice(-30);
+    }
+
+  } catch (error) {
+    console.warn("Could not load saved tracker.", error);
+  }
+}
+
+
+/* ==========================================================
+   SETUP
+========================================================== */
+
+function renderLunchOptions() {
+
+  lunchOptionsEl.innerHTML = "";
+
+  state.settings.lunchOptions.forEach((option, index) => {
+
+    const row = document.createElement("div");
+    row.className = "lunch-row";
+
+    const input = document.createElement("input");
+
+    input.type = "text";
+    input.value = option.name;
+    input.placeholder = "Lunch option";
+
+    input.addEventListener("input", () => {
+      state.settings.lunchOptions[index].name = input.value;
+      saveState();
+    });
+
+    const imageInput = document.createElement("input");
+    imageInput.type = "file";
+    imageInput.accept = "image/*";
+    imageInput.className = "lunch-image-input";
+    imageInput.title = "Upload an image for this lunch choice";
+
+    imageInput.addEventListener("change", () => {
+      const file = imageInput.files[0];
+
+      if (!file) {
+        return;
+      }
+
+      const reader = new FileReader();
+
+      reader.addEventListener("load", () => {
+        state.settings.lunchOptions[index].image = reader.result;
+        renderLunchOptions();
+        saveState();
+      });
+
+      reader.readAsDataURL(file);
+    });
+
+    row.appendChild(input);
+    row.appendChild(imageInput);
+
+    if (option.image) {
+      const preview = document.createElement("img");
+      preview.className = "lunch-image-preview";
+      preview.src = option.image;
+      preview.alt = `${option.name || "Lunch choice"} image`;
+      row.appendChild(preview);
+    }
+
+    const remove = document.createElement("button");
+
+    remove.className = "small-button";
+    remove.textContent = "Remove";
+
+    remove.addEventListener("click", () => {
+
+      state.settings.lunchOptions.splice(index, 1);
+
+      if (state.settings.lunchOptions.length === 0) {
+        state.settings.lunchOptions.push({ name: "School Lunch", image: "" });
+      }
+
+      renderLunchOptions();
+      saveState();
+    });
+
+    row.appendChild(remove);
+
+    lunchOptionsEl.appendChild(row);
+  });
+}
+
+
+function selectCharacter(mode) {
+
+  state.settings.characterMode = mode;
+
+  document.querySelectorAll(
+    ".character-choice"
+  ).forEach(button => {
+    button.classList.toggle(
+      "selected",
+      button.dataset.character === mode
+    );
+  });
+
+  state.students.forEach(student => {
+    student.character = null;
+  });
+
+  assignCharacters();
+  saveState();
+}
+
+
+function renderCharacterChoices() {
+
+  const characterGrid = document.getElementById("characterGrid");
+  characterGrid.innerHTML = "";
+
+  const characters = [
+    ...BUILT_IN_CHARACTERS,
+    ...state.settings.customCharacters.map(character => ({
+      id: character.id,
+      label: character.name,
+      image: character.image
+    }))
+  ];
+
+  characters.forEach(character => {
+
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "character-choice";
+    button.dataset.character = character.id;
+
+    if (character.id === "auto" && state.settings.customCharacters.length > 0) {
+      const preview = document.createElement("div");
+      preview.className = "auto-preview";
+
+      state.settings.customCharacters.slice(0, 4).forEach(item => {
+        const image = document.createElement("img");
+        image.className = "clipart";
+        image.src = item.image;
+        image.alt = `${item.name} clipart`;
+        preview.appendChild(image);
+      });
+
+      button.appendChild(preview);
+    } else if (character.image) {
+      const image = document.createElement("img");
+      image.className = "clipart";
+      image.src = character.image;
+      image.alt = `${character.label} clipart`;
+      button.appendChild(image);
+    } else {
+      const emoji = document.createElement("span");
+      emoji.className = "emoji";
+      emoji.textContent = (character.emoji || character.label || "A").charAt(0).toUpperCase();
+      button.appendChild(emoji);
+    }
+
+    const label = document.createElement("span");
+    label.textContent = character.label;
+    button.appendChild(label);
+
+    const isUploadedCharacter =
+      typeof character.id === "string" &&
+      character.id.startsWith("custom-") &&
+      Boolean(character.image);
+
+    if (isUploadedCharacter) {
+      const removeButton = document.createElement("button");
+      removeButton.type = "button";
+      removeButton.className = "character-remove";
+      removeButton.textContent = "×";
+      removeButton.setAttribute("aria-label", `Remove ${character.label}`);
+
+      removeButton.addEventListener("click", event => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        state.settings.customCharacters = state.settings.customCharacters.filter(
+          item => item.id !== character.id
+        );
+
+        if (state.settings.characterMode === character.id) {
+          state.settings.characterMode = "auto";
+        }
+
+        state.students.forEach(student => {
+          student.character = null;
+        });
+
+        renderCharacterChoices();
+        assignCharacters();
+        saveState();
+      });
+
+      button.appendChild(removeButton);
+    }
+
+    button.addEventListener("click", () => {
+      selectCharacter(character.id);
+    });
+
+    characterGrid.appendChild(button);
+  });
+
+  const upload = document.createElement("label");
+  upload.className = "character-upload";
+  upload.textContent = "+ Upload clipart";
+
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = "image/*";
+
+  input.addEventListener("change", () => {
+    const file = input.files[0];
+
+    if (!file) {
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.addEventListener("load", () => {
+      const name = file.name.replace(/\.[^/.]+$/, "");
+      const character = {
+        id: `custom-${createId()}`,
+        name: name || "Uploaded clipart",
+        image: reader.result
+      };
+
+      state.settings.customCharacters.push(character);
+      renderCharacterChoices();
+      selectCharacter(character.id);
+      saveState();
+    });
+
+    reader.readAsDataURL(file);
+  });
+
+  upload.appendChild(input);
+  characterGrid.appendChild(upload);
+}
+
+
+function loadSetupFields() {
+
+  state.settings.backgroundImage = state.settings.backgroundImage || "";
+  state.settings.backgroundColor = /^#[0-9a-f]{6}$/i.test(
+    state.settings.backgroundColor || ""
+  ) ? state.settings.backgroundColor : "";
+
+  state.settings.customCharacters =
+    (state.settings.customCharacters || []).filter(
+      character => character.id && character.image
+    );
+
+  state.settings.lunchOptions =
+    (state.settings.lunchOptions || []).map(option =>
+      typeof option === "string"
+        ? { name: option, image: "" }
+        : { name: option.name || "", image: option.image || "" }
+    );
+
+  studentNames.value =
+    state.students
+      .map(student => student.name)
+      .join("\n");
+
+  lunchEnabled.checked =
+    state.settings.lunchEnabled;
+
+  renderBackgroundControls();
+
+  document.querySelectorAll(
+    'input[name="position"]'
+  ).forEach(input => {
+    input.checked =
+      input.value === state.settings.position;
+  });
+
+  renderCharacterChoices();
+  renderLunchOptions();
+}
+
+
+function renderBackgroundControls() {
+
+  const hasImage = Boolean(state.settings.backgroundImage);
+  const hasColor = Boolean(state.settings.backgroundColor);
+
+  backgroundImageInput.value = "";
+  if (hasImage) {
+    backgroundImagePreview.src = state.settings.backgroundImage;
+  } else {
+    backgroundImagePreview.removeAttribute("src");
+  }
+  backgroundImagePreview.classList.toggle("hidden", !hasImage);
+  backgroundColorPicker.value = state.settings.backgroundColor || "#ffffff";
+  backgroundColorHex.value = state.settings.backgroundColor;
+  removeBackgroundButton.classList.toggle("hidden", !hasImage && !hasColor);
+}
+
+
+function readSetupFields() {
+
+  const names = studentNames.value
+    .split("\n")
+    .map(name => name.trim())
+    .filter(Boolean);
+
+  const oldStudents = state.students;
+
+  state.students = names.map((name, index) => {
+
+    const existing = oldStudents.find(
+      student => student.name === name
+    );
+
+    if (existing) {
+      return existing;
+    }
+
+    return {
+      id: createId(),
+      name,
+      status: "unmarked",
+      lunch: null,
+      character: null
+    };
+
+  });
+
+  state.settings.lunchEnabled =
+    lunchEnabled.checked;
+
+  const selectedPosition =
+    document.querySelector(
+      'input[name="position"]:checked'
+    );
+
+  if (selectedPosition) {
+    state.settings.position =
+      selectedPosition.value;
+  }
+
+  saveState();
+}
+
+
+function createId() {
+  return (
+    Date.now().toString(36) +
+    Math.random().toString(36).slice(2)
+  );
+}
+
+
+/* ==========================================================
+   CHARACTER ASSIGNMENT
+========================================================== */
+
+function assignCharacters() {
+
+  const mode =
+    state.settings.characterMode;
+
+  state.students.forEach((student, index) => {
+
+    if (student.character) {
+      return;
+    }
+
+    if (mode === "auto") {
+      const autoRotation =
+        state.settings.customCharacters.length
+          ? state.settings.customCharacters.map(character => ({
+              image: character.image,
+              name: character.name
+            }))
+          : CHARACTER_ROTATION;
+
+      student.character =
+        autoRotation[
+          index % autoRotation.length
+        ];
+    } else if (
+      state.settings.customCharacters.some(
+        character => character.id === mode
+      )
+    ) {
+      const character =
+        state.settings.customCharacters.find(
+          item => item.id === mode
+        );
+
+      student.character = {
+        image: character.image,
+        name: character.name
+      };
+    } else {
+      student.character = mode;
+    }
+
+  });
+
+}
+
+
+/* ==========================================================
+   TRACKER
+========================================================== */
+
+function startTracker() {
+
+  readSetupFields();
+
+  if (state.students.length === 0) {
+
+    alert(
+      "Please enter at least one student name."
+    );
+
+    return;
+  }
+
+  assignCharacters();
+
+  state.history = [];
+
+  saveState();
+
+  showTracker();
+}
+
+
+function showTracker() {
+
+  setupView.classList.add("hidden");
+  trackerView.classList.remove("hidden");
+
+  renderTracker();
+}
+
+
+function renderTracker() {
+
+  const hasCustomBackground = Boolean(
+    state.settings.backgroundImage || state.settings.backgroundColor
+  );
+  scene.classList.toggle("has-background", hasCustomBackground);
+  scene.style.backgroundImage = state.settings.backgroundImage
+    ? `url("${state.settings.backgroundImage}")`
+    : state.settings.backgroundColor
+      ? "none"
+      : "";
+  scene.style.backgroundColor = state.settings.backgroundColor || "";
+
+  trackerTitle.textContent =
+    "Attendance Check-In";
+
+  if (questionText) {
+    questionText.textContent = "";
+  }
+
+  const here =
+    state.students.filter(
+      student => student.status === "here"
+    ).length;
+
+  progress.textContent =
+    `${here} of ${state.students.length} here`;
+
+  renderLunchCounter();
+
+  studentsEl.classList.toggle(
+    "whole-screen",
+    state.settings.position === "whole"
+  );
+
+  studentsEl.innerHTML = "";
+
+  state.students.forEach(student => {
+
+    const card =
+      document.createElement("button");
+
+    card.className =
+      `student ${student.status}`;
+
+    card.type = "button";
+
+    card.innerHTML = `
+      <span class="check-mark">✓</span>
+      <span class="x-mark">X</span>
+      <div class="student-name">
+        ${escapeHTML(student.name)}
+      </div>
+    `;
+
+    const character = document.createElement("div");
+    character.className = "student-character";
+
+    if (
+      student.character &&
+      typeof student.character === "object" &&
+      student.character.image
+    ) {
+      const image = document.createElement("img");
+      image.src = student.character.image;
+      image.alt = `${student.character.name || "Character"} clipart`;
+      character.appendChild(image);
+    } else {
+      character.textContent = student.character || "A";
+    }
+
+    card.insertBefore(
+      character,
+      card.querySelector(".student-name")
+    );
+
+    card.addEventListener(
+      "click",
+      () => toggleStudent(student.id)
+    );
+
+    studentsEl.appendChild(card);
+  });
+}
+
+
+function renderLunchCounter() {
+
+  lunchCounter.innerHTML = "";
+  const options = state.settings.lunchOptions.filter(
+    option => option.name.trim()
+  );
+  lunchCounter.classList.toggle(
+    "hidden",
+    !state.settings.lunchEnabled || !options.length
+  );
+
+  if (!state.settings.lunchEnabled || !options.length) {
+    return;
+  }
+
+  options.forEach(option => {
+      const count = state.students.filter(
+        student => student.lunch === option.name
+      ).length;
+      const item = document.createElement("span");
+      item.className = "lunch-counter-item";
+      item.textContent = `${option.name}: ${count}`;
+      lunchCounter.appendChild(item);
+    });
+}
+
+
+function getStatusLabel(status) {
+
+  if (status === "here") {
+    return "Here";
+  }
+
+  if (status === "away") {
+    return "Away";
+  }
+
+  return "";
+}
+
+
+function toggleStudent(id) {
+
+  const student =
+    state.students.find(
+      item => item.id === id
+    );
+
+  if (!student) return;
+
+  saveHistory();
+
+  if (student.status === "unmarked") {
+
+    student.status = "here";
+
+    saveState();
+    renderTracker();
+
+    if (
+      state.settings.lunchEnabled &&
+      state.settings.lunchOptions.length
+    ) {
+      openLunch(student);
+    }
+
+    return;
+  }
+
+  if (student.status === "here") {
+
+    student.status = "away";
+    student.lunch = null;
+
+  } else {
+
+    student.status = "unmarked";
+    student.lunch = null;
+
+  }
+
+  saveState();
+  renderTracker();
+}
+
+
+/* ==========================================================
+   HISTORY / UNDO
+========================================================== */
+
+function saveHistory() {
+
+  state.history.push(
+    JSON.stringify(
+      state.students.map(student => ({
+        id: student.id,
+        status: student.status,
+        lunch: student.lunch
+      }))
+    )
+  );
+
+  if (state.history.length > 30) {
+    state.history.shift();
+  }
+}
+
+
+function undoLast() {
+
+  if (!state.history.length) {
+    return;
+  }
+
+  const previous =
+    state.history.pop();
+
+  try {
+
+    const savedStudents = JSON.parse(previous);
+    const currentStudents = new Map(
+      state.students.map(student => [student.id, student])
+    );
+
+    state.students = savedStudents.map(savedStudent => {
+      const student = currentStudents.get(savedStudent.id);
+
+      return student
+        ? {
+            ...student,
+            status: savedStudent.status,
+            lunch: savedStudent.lunch
+          }
+        : savedStudent;
+    });
+
+    saveState();
+    renderTracker();
+
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+
+/* ==========================================================
+   LUNCH
+========================================================== */
+
+function openLunch(student) {
+
+  lunchStudent.textContent =
+    student.name;
+
+  lunchChoices.innerHTML = "";
+
+  state.settings.lunchOptions
+    .filter(option => option.name.trim())
+    .forEach(option => {
+
+      const button =
+        document.createElement("button");
+
+      button.className =
+        "lunch-choice";
+
+      const content = document.createElement("span");
+      content.className = "lunch-choice-content";
+
+      if (option.image) {
+        const image = document.createElement("img");
+        image.src = option.image;
+        image.alt = `${option.name} image`;
+        content.appendChild(image);
+      }
+
+      const label = document.createElement("span");
+      label.textContent = option.name;
+      content.appendChild(label);
+      button.appendChild(content);
+
+      button.addEventListener(
+        "click",
+        () => {
+
+          student.lunch =
+            option.name;
+
+          saveState();
+          renderLunchCounter();
+          closeLunch();
+          playCheckInSound();
+        }
+      );
+
+      lunchChoices.appendChild(button);
+
+    });
+
+  lunchModal.classList.remove("hidden");
+}
+
+
+function closeLunch() {
+  lunchModal.classList.add("hidden");
+}
+
+
+function playCheckInSound() {
+  const AudioContextClass =
+    window.AudioContext || window.webkitAudioContext;
+
+  if (!AudioContextClass) {
+    return;
+  }
+
+  try {
+    if (!checkInAudioContext) {
+      checkInAudioContext = new AudioContextClass();
+    }
+
+    if (checkInAudioContext.state === "suspended") {
+      checkInAudioContext.resume().catch(() => {});
+    }
+
+    [523.25, 659.25, 783.99].forEach((frequency, index) => {
+      const oscillator = checkInAudioContext.createOscillator();
+      const gain = checkInAudioContext.createGain();
+      const startTime = checkInAudioContext.currentTime + index * 0.11;
+
+      oscillator.type = "sine";
+      oscillator.frequency.setValueAtTime(frequency, startTime);
+      gain.gain.setValueAtTime(0.0001, startTime);
+      gain.gain.linearRampToValueAtTime(0.12, startTime + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.26);
+
+      oscillator.connect(gain);
+      gain.connect(checkInAudioContext.destination);
+      oscillator.start(startTime);
+      oscillator.stop(startTime + 0.28);
+    });
+  } catch (error) {
+    console.warn("Could not play check-in sound.", error);
+  }
+}
+
+
+/* ==========================================================
+   REPORT
+========================================================== */
+
+function renderReport() {
+
+  const here =
+    state.students.filter(
+      student => student.status === "here"
+    );
+
+  const away =
+    state.students.filter(
+      student => student.status === "away"
+    );
+
+  document.getElementById(
+    "hereCount"
+  ).textContent = here.length;
+
+  document.getElementById(
+    "awayCount"
+  ).textContent = away.length;
+
+  document.getElementById(
+    "hereList"
+  ).textContent =
+    here.length
+      ? here.map(student => student.name).join(", ")
+      : "None yet";
+
+  document.getElementById(
+    "awayList"
+  ).textContent =
+    away.length
+      ? away.map(student => student.name).join(", ")
+      : "None yet";
+
+  const lunchReport =
+    document.getElementById("lunchReport");
+
+  const studentLunchReport =
+    document.getElementById("studentLunchReport");
+
+  lunchReport.innerHTML = "";
+  studentLunchReport.innerHTML = "";
+
+  if (!state.settings.lunchEnabled) {
+
+    document.getElementById(
+      "lunchReportSection"
+    ).classList.add("hidden");
+
+    document.getElementById(
+      "studentLunchReportSection"
+    ).classList.add("hidden");
+
+    return;
+  }
+
+  document.getElementById(
+    "lunchReportSection"
+  ).classList.remove("hidden");
+
+  document.getElementById(
+    "studentLunchReportSection"
+  ).classList.remove("hidden");
+
+  state.settings.lunchOptions
+    .filter(option => option.name.trim())
+    .forEach(option => {
+
+      const count =
+        state.students.filter(
+          student =>
+            student.lunch === option.name
+        ).length;
+
+      const item =
+        document.createElement("div");
+
+      item.className =
+        "lunch-count";
+
+      item.innerHTML = `
+        <strong>${count}</strong>
+        ${escapeHTML(option.name)}
+      `;
+
+      if (option.image) {
+        const image = document.createElement("img");
+        image.className = "lunch-count-image";
+        image.src = option.image;
+        image.alt = `${option.name} image`;
+        item.appendChild(image);
+      }
+
+      lunchReport.appendChild(item);
+
+    });
+
+  const hereWithLunch =
+    state.students.filter(
+      student => student.status === "here"
+    );
+
+  if (!hereWithLunch.length) {
+    studentLunchReport.textContent = "No students checked in yet";
+    return;
+  }
+
+  hereWithLunch.forEach(student => {
+    const row = document.createElement("div");
+    row.className = "student-lunch-item";
+    row.textContent = `${student.name}: ${student.lunch || "No lunch selected"}`;
+    studentLunchReport.appendChild(row);
+  });
+}
+
+
+function openReport() {
+
+  renderReport();
+
+  reportModal.classList.remove(
+    "hidden"
+  );
+}
+
+
+function closeReport() {
+
+  reportModal.classList.add(
+    "hidden"
+  );
+}
+
+
+function buildReportText() {
+
+  const today =
+    new Date().toLocaleDateString();
+
+  const here =
+    state.students
+      .filter(student => student.status === "here")
+      .map(student => student.name);
+
+  const away =
+    state.students
+      .filter(student => student.status === "away")
+      .map(student => student.name);
+
+  let text =
+    `Attendance Check-In — ${today}\n\n`;
+
+  text +=
+    `HERE (${here.length})\n`;
+
+  text +=
+    here.length
+      ? here.join(", ")
+      : "None";
+
+  text +=
+    `\n\nAWAY (${away.length})\n`;
+
+  text +=
+    away.length
+      ? away.join(", ")
+      : "None";
+
+  if (state.settings.lunchEnabled) {
+
+    text += "\n\nLUNCH COUNT\n";
+
+    state.settings.lunchOptions
+      .filter(option => option.name.trim())
+      .forEach(option => {
+
+        const count =
+          state.students.filter(
+            student =>
+              student.lunch === option.name
+          ).length;
+
+        text +=
+          `${option.name}: ${count}\n`;
+
+      });
+
+    text += "\nLUNCH CHOICES\n";
+
+    const hereWithLunch =
+      state.students.filter(
+        student => student.status === "here"
+      );
+
+    if (!hereWithLunch.length) {
+      text += "No students checked in yet\n";
+    } else {
+      hereWithLunch.forEach(student => {
+        text += `${student.name}: ${student.lunch || "No lunch selected"}\n`;
+      });
+    }
+
+  }
+
+  return text;
+}
+
+
+async function copyReport() {
+
+  const text =
+    buildReportText();
+
+  try {
+
+    await navigator.clipboard.writeText(
+      text
+    );
+
+    const button =
+      document.getElementById("copyReport");
+
+    const old =
+      button.textContent;
+
+    button.textContent =
+      "Copied!";
+
+    setTimeout(() => {
+      button.textContent = old;
+    }, 1500);
+
+  } catch (error) {
+
+    prompt(
+      "Copy this report:",
+      text
+    );
+
+  }
+}
+
+
+/* ==========================================================
+   NEW DAY
+========================================================== */
+
+function startNewDay() {
+
+  const confirmed =
+    confirm(
+      "Start a new day? Today's check-ins and lunch choices will be cleared."
+    );
+
+  if (!confirmed) {
+    return;
+  }
+
+  state.students.forEach(
+    student => {
+      student.status = "unmarked";
+      student.lunch = null;
+    }
+  );
+
+  state.history = [];
+
+  saveState();
+  renderTracker();
+  closeReport();
+}
+
+
+/* ==========================================================
+   SETTINGS
+========================================================== */
+
+function openSettings() {
+
+  setupView.classList.remove(
+    "hidden"
+  );
+
+  trackerView.classList.add(
+    "hidden"
+  );
+
+  loadSetupFields();
+}
+
+
+document.getElementById(
+  "settingsButton"
+).addEventListener(
+  "click",
+  openSettings
+);
+
+
+/* ==========================================================
+   BACKUP / RESTORE
+========================================================== */
+
+function downloadBackup() {
+
+  readSetupFields();
+
+  const backup = {
+    app: "Attendance Check-In",
+    version: 1,
+    exportedAt:
+      new Date().toISOString(),
+    state
+  };
+
+  const blob =
+    new Blob(
+      [JSON.stringify(backup, null, 2)],
+      {
+        type: "application/json"
+      }
+    );
+
+  const url =
+    URL.createObjectURL(blob);
+
+  const link =
+    document.createElement("a");
+
+  link.href = url;
+
+  link.download =
+    "fall-friends-backup.json";
+
+  document.body.appendChild(link);
+
+  link.click();
+
+  link.remove();
+
+  URL.revokeObjectURL(url);
+}
+
+
+function restoreBackup(file) {
+
+  const reader =
+    new FileReader();
+
+  reader.onload = event => {
+
+    try {
+
+      const backup =
+        JSON.parse(
+          event.target.result
+        );
+
+      if (
+        !backup ||
+        backup.app !==
+        "Attendance Check-In" ||
+        !backup.state
+      ) {
+
+        alert(
+          "That file doesn't look like an Attendance Check-In backup."
+        );
+
+        return;
+      }
+
+      state =
+        backup.state;
+
+      saveState();
+
+      loadSetupFields();
+
+      alert(
+        "Restored! Your class list and settings are back."
+      );
+
+    } catch (error) {
+
+      alert(
+        "The backup file could not be read."
+      );
+
+    }
+
+  };
+
+  reader.readAsText(file);
+}
+
+
+/* ==========================================================
+   EVENT LISTENERS
+========================================================== */
+
+backgroundImageInput.addEventListener(
+  "change",
+  () => {
+    const file = backgroundImageInput.files[0];
+
+    if (!file || !file.type.startsWith("image/")) {
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.addEventListener("load", () => {
+      const image = new Image();
+
+      image.addEventListener("load", () => {
+        const maxDimension = 1600;
+        const scale = Math.min(
+          1,
+          maxDimension / Math.max(image.naturalWidth, image.naturalHeight)
+        );
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(image.naturalWidth * scale);
+        canvas.height = Math.round(image.naturalHeight * scale);
+
+        const context = canvas.getContext("2d");
+        context.fillStyle = "#fff";
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+        try {
+          state.settings.backgroundImage = canvas.toDataURL("image/jpeg", 0.82);
+          state.settings.backgroundColor = "";
+          saveState();
+          renderBackgroundControls();
+        } catch (error) {
+          alert("That image could not be saved. Try a smaller picture.");
+        }
+      });
+
+      image.src = reader.result;
+    });
+
+    reader.readAsDataURL(file);
+  }
+);
+
+removeBackgroundButton.addEventListener("click", () => {
+  state.settings.backgroundImage = "";
+  state.settings.backgroundColor = "";
+  saveState();
+  renderBackgroundControls();
+});
+
+function setBackgroundColor(color) {
+  state.settings.backgroundColor = color;
+  state.settings.backgroundImage = "";
+  saveState();
+  renderBackgroundControls();
+}
+
+backgroundColorPicker.addEventListener("input", () => {
+  setBackgroundColor(backgroundColorPicker.value.toUpperCase());
+});
+
+backgroundColorHex.addEventListener("input", () => {
+  backgroundColorHex.setCustomValidity("");
+  const value = backgroundColorHex.value.trim();
+  const color = value.startsWith("#") ? value : `#${value}`;
+
+  if (/^#[0-9a-f]{6}$/i.test(color)) {
+    setBackgroundColor(color.toUpperCase());
+  }
+});
+
+backgroundColorHex.addEventListener("change", () => {
+  const value = backgroundColorHex.value.trim();
+  const color = value.startsWith("#") ? value : `#${value}`;
+
+  if (!/^#[0-9a-f]{6}$/i.test(color)) {
+    backgroundColorHex.setCustomValidity("Enter a six-digit hex code, such as #AABBCC.");
+    backgroundColorHex.reportValidity();
+  }
+});
+
+document.getElementById(
+  "startButton"
+).addEventListener(
+  "click",
+  startTracker
+);
+
+
+document.getElementById(
+  "undoButton"
+).addEventListener(
+  "click",
+  undoLast
+);
+
+
+document.getElementById(
+  "reportButton"
+).addEventListener(
+  "click",
+  openReport
+);
+
+
+document.getElementById(
+  "closeReport"
+).addEventListener(
+  "click",
+  closeReport
+);
+
+
+document.getElementById(
+  "copyReport"
+).addEventListener(
+  "click",
+  copyReport
+);
+
+
+document.getElementById(
+  "newDay"
+).addEventListener(
+  "click",
+  startNewDay
+);
+
+
+document.getElementById(
+  "closeLunch"
+).addEventListener(
+  "click",
+  closeLunch
+);
+
+
+document.getElementById(
+  "addLunch"
+).addEventListener(
+  "click",
+  () => {
+
+    state.settings.lunchOptions.push(
+      { name: "New Option", image: "" }
+    );
+
+    renderLunchOptions();
+    saveState();
+
+  }
+);
+
+
+document.getElementById(
+  "downloadBackup"
+).addEventListener(
+  "click",
+  downloadBackup
+);
+
+
+document.getElementById(
+  "restoreButton"
+).addEventListener(
+  "click",
+  () => {
+    document
+      .getElementById("restoreInput")
+      .click();
+  }
+);
+
+
+document.getElementById(
+  "restoreInput"
+).addEventListener(
+  "change",
+  event => {
+
+    const file =
+      event.target.files[0];
+
+    if (file) {
+      restoreBackup(file);
+    }
+
+    event.target.value = "";
+
+  }
+);
+
+
+/* Character selection */
+
+document.querySelectorAll(
+  ".character-choice"
+).forEach(button => {
+
+  button.addEventListener(
+    "click",
+    () => {
+
+      document.querySelectorAll(
+        ".character-choice"
+      ).forEach(
+        item =>
+          item.classList.remove(
+            "selected"
+          )
+      );
+
+      button.classList.add(
+        "selected"
+      );
+
+      state.settings.characterMode =
+        button.dataset.character;
+
+      // Reassign characters when the
+      // teacher changes the selection.
+      state.students.forEach(
+        student => {
+          student.character = null;
+        }
+      );
+
+      assignCharacters();
+
+      saveState();
+
+    }
+  );
+
+});
+
+
+/* ==========================================================
+   UTILITY
+========================================================== */
+
+function escapeHTML(value) {
+
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+
+/* ==========================================================
+   INITIALIZE
+========================================================== */
+
+loadState();
+
+loadSetupFields();
+
+</script>
+
+</body>
+</html>
